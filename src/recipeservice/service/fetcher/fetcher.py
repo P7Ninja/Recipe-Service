@@ -42,3 +42,11 @@ def fetch_valdemar_recipe(url: str):
         "image": image,
         "tags": tags
     }
+    
+def fetch_MealDB_recipe(url: str):
+    if urlsplit(url).netloc != "www.themealdb.com":
+        raise Exception(f"{url} is not TheMealDB")
+    
+    res = requests.get(url)
+    return res.json()
+    
