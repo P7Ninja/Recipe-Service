@@ -6,7 +6,7 @@ def parse_MealDB_recipe(recipes):
     recipe = recipes['meals'][0]
     
     id = recipe['idMeal']
-    url = 'www.themealdb.com/api/json/v1/1/lookup.php?i=' + id
+    url = 'https://www.themealdb.com/api/json/v1/1/lookup.php?i=' + id
     title = recipe['strMeal']
     instructions = recipe['strInstructions']
     
