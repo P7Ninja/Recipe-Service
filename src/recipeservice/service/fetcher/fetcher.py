@@ -49,4 +49,3 @@ def fetch_MealDB_recipe(url: str):
     
     res = requests.get(url)
     return res.json()
-    
