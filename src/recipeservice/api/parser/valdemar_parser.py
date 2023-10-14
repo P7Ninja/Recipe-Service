@@ -1,4 +1,4 @@
-from ..database.datastructure import *
+from ...database.schema import *
 
 def parse_valdemar_recipe(recipe: dict, units: set):
     tags = {t.lower() for t in recipe["tags"]}
