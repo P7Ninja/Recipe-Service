@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 class BaseRecipe(BaseModel):
     title: str
     servings: int

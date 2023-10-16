@@ -1,9 +1,9 @@
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Double, Table
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy import Column, ForeignKey, Integer, String, Double, Table, Text
+from sqlalchemy.orm import relationship, DeclarativeBase, Mapped
+from typing import List
 
 Base: DeclarativeBase = declarative_base()
-
 
 recipe_tag_association = Table(
     "recipe_tag_association", 
@@ -16,14 +16,14 @@ class Recipe(Base):
     __tablename__ = "recipes"
     id           = Column(Integer, nullable=False, autoincrement=True, primary_key=True)
 
-    title        = Column(String, nullable=False)
+    title        = Column(String(255), nullable=False)
     servings     = Column(Integer, nullable=False)
-    instructions = Column(String)
-    url          = Column(String, unique=True)
+    instructions = Column(Text)
+    url          = Column(String(255), unique=True)
 
-    energy       = relationship("Energy", back_populates="recipe", uselist=False, cascade="all, delete-orphan")
-    ingredients  = relationship("Ingredient", back_populates="recipe", cascade="all, delete-orphan")
-    tags = relationship("Tag", secondary=recipe_tag_association, back_populates="recipes")
+    energy: Mapped['Energy'] = relationship("Energy", back_populates="recipe", uselist=False, cascade="all, delete-orphan")
+    ingredients: Mapped[List['Ingredient']]  = relationship("Ingredient", back_populates="recipe", cascade="all, delete-orphan")
+    tags: Mapped[List['Tag']] = relationship("Tag", secondary=recipe_tag_association, back_populates="recipes")
 
 class Energy(Base):
     __tablename__ = "energy"
@@ -47,15 +47,15 @@ class Ingredient(Base):
     item_id   = Column(Integer, ForeignKey("items.id"))
     recipe_id = Column(Integer, ForeignKey("recipes.id"))
 
-    unit      = relationship("Unit", back_populates="ingredients")
-    item      = relationship("Item", back_populates="ingredients")
+    unit: Mapped['Unit'] = relationship("Unit", back_populates="ingredients")
+    item: Mapped['Item'] = relationship("Item", back_populates="ingredients")
     recipe    = relationship("Recipe", back_populates="ingredients")
 
 class Item(Base):
     __tablename__ = "items"
     id   = Column(Integer, nullable=False, autoincrement=True, primary_key=True)
 
-    name = Column(String, nullable=False, unique=True)
+    name = Column(String(255), nullable=False, unique=True)
 
     ingredients = relationship("Ingredient", back_populates="item")
 
@@ -63,7 +63,7 @@ class Unit(Base):
     __tablename__ = "units"
     id   = Column(Integer, nullable=False, autoincrement=True, primary_key=True)
 
-    name = Column(String, nullable=False, unique=True)
+    name = Column(String(255), nullable=False, unique=True)
 
     ingredients = relationship("Ingredient", back_populates="unit")
 
@@ -71,6 +71,6 @@ class Unit(Base):
 class Tag(Base):
     __tablename__ = "tags"
     id = Column(Integer, nullable=False, autoincrement=True, primary_key=True)
-    tag = Column(String, nullable=False, unique=True)
+    tag = Column(String(255), nullable=False, unique=True)
 
     recipes = relationship("Recipe", secondary=recipe_tag_association, back_populates="tags")

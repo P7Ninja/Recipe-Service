@@ -160,4 +160,6 @@ cython_debug/
 #.idea/
 
 /data
-db.pkl
+*.pkl
+*.db
+app/test_app.py

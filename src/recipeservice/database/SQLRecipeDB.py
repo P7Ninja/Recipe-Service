@@ -1,9 +1,10 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker
 
 from .BaseRecipeDB import BaseRecipeDB
 from .model import sql as model
 from . import schema
+from .factory import recipe_from_schema, recipe_from_sql_model
 
 class SQLRecipeDB(BaseRecipeDB):
         def __init__(self, cfg: dict) -> None:
@@ -23,69 +24,36 @@ class SQLRecipeDB(BaseRecipeDB):
             return self.__db.query(model.Recipe).limit(100).all()
         
         def create_recipe(self, recipe: schema.BaseRecipe):
-            db_energy = model.Energy(
-                calories      = recipe.energy.calories,
-                fat           = recipe.energy.fat,
-                protein       = recipe.energy.protein,
-                carbohydrates = recipe.energy.carbohydrates,
-            )
-
-            db_recipe = model.Recipe(
-                title        = recipe.title,
-                servings     = recipe.servings,
-                instructions = recipe.instructions,
-                energy       = db_energy,
-                url          = recipe.url
-            )
-
-            ingredients = []
-            item_cache = dict()
-            unit_cache = dict()
-            for ingredient in recipe.ingredients:
-                db_item = self.__db.query(model.Item).filter(model.Item.name == ingredient.item).first()
-                if db_item is None:
-                    db_item = item_cache.get(ingredient.item, None)
-                if db_item is None:
-                    db_item = model.Item(name=ingredient.item)
-                    item_cache[ingredient.item] = db_item
-
-                db_unit = self.__db.query(model.Unit).filter(model.Unit.name == ingredient.unit).first()
-                if db_unit is None:
-                    db_unit =unit_cache.get(ingredient.unit, None)
-                if db_unit is None:
-                    db_unit = model.Unit(name=ingredient.unit)
-                    unit_cache[ingredient.unit] = db_unit
-
-                db_ingredient = model.Ingredient(
-                    amount = ingredient.amount,
-                    unit   = db_unit,
-                    item   = db_item
-                )
-                ingredients.append(db_ingredient)
-
-            db_recipe.ingredients = ingredients
-
-            tags = []
-            tag_cache = dict()
-            for tag in recipe.tags:
-                db_tag = self.__db.query(model.Tag).filter(model.Tag.tag == tag).first()
-                if db_tag is None:
-                    db_tag = tag_cache.get(tag, None)
-                if db_tag is None:
-                    db_tag = model.Tag(tag=tag)
-                    tag_cache[tag] = db_tag
-                tags.append(db_tag)
-            
-            db_recipe.tags = tags
-
-            self.__db.add(db_recipe)
-            self.__db.commit()
-            self.__db.refresh(db_recipe)
-
+            db_recipe = recipe_from_schema(self.__db, recipe)
             return db_recipe.id
 
         def get_recipe(self, id: int):
             return self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
+        
+        def get_random_recipe(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None):
+            calMin, calMax = minMax(calories, energy_error)
+            proMin, proMax = minMax(protein, energy_error)
+            fatMin, fatMax = minMax(fat, energy_error)
+            carbMin, carbMax = minMax(carbs, energy_error)
+            recipes = self.__db.query(model.Recipe)\
+                .join(model.Energy)\
+                .filter(
+                    model.Energy.calories <= calMax,
+                    model.Energy.calories >= calMin,
+                    model.Energy.protein <= proMax,
+                    model.Energy.protein >= proMin,
+                    model.Energy.fat >= fatMin,
+                    model.Energy.fat <= fatMax,
+                    model.Energy.carbohydrates <= carbMax,
+                    model.Energy.carbohydrates >= carbMin,
+                    )
+            if tags is not None:
+                recipes = recipes.join(model.recipe_tag_association).join(model.Tag)\
+                    .filter(model.Tag.tag.in_(tags))
+            recipe = recipes.order_by(func.random()).first()
+            if recipe is None:
+                return None
+            return recipe_from_sql_model(recipe)
         
         def delete_recipe(self, id: int):
             try:
@@ -97,3 +65,10 @@ class SQLRecipeDB(BaseRecipeDB):
             except:
                 return False
             return True
+
+
+def minMax(num: float, error: float):
+    if num == 0:
+        return 0, 999999
+    numError = (num * error)
+    return num - numError,  num + numError
