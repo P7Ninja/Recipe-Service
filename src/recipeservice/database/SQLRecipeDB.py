@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, func
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, session
 
 from .BaseRecipeDB import BaseRecipeDB
 from .model import sql as model
@@ -17,18 +17,19 @@ class SQLRecipeDB(BaseRecipeDB):
             model.Base.metadata.create_all(self.__engine)
 
         def shutdown(self):
-            self.__local.close_all()
+            session.close_all_sessions()
             self.__engine.dispose()
         
         def get_recipes(self):
-            return self.__db.query(model.Recipe).limit(100).all()
+            return [recipe_from_sql_model(r) for r in self.__db.query(model.Recipe).limit(100).all()]
         
         def create_recipe(self, recipe: schema.BaseRecipe):
             db_recipe = recipe_from_schema(self.__db, recipe)
             return db_recipe.id
 
         def get_recipe(self, id: int):
-            return self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
+           recipe = self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
+           return recipe_from_sql_model(recipe)
         
         def get_random_recipe(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None):
             calMin, calMax = minMax(calories, energy_error)
@@ -57,7 +58,7 @@ class SQLRecipeDB(BaseRecipeDB):
         
         def delete_recipe(self, id: int):
             try:
-                recipe = self.get_recipe(id)
+                recipe = self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
                 if recipe is None:
                     return False
                 self.__db.delete(recipe)
