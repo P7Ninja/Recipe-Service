@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker, session
 
 from .BaseRecipeDB import BaseRecipeDB
@@ -24,14 +25,19 @@ class SQLRecipeDB(BaseRecipeDB):
             return [recipe_from_sql_model(r) for r in self.__db.query(model.Recipe).limit(100).all()]
         
         def create_recipe(self, recipe: schema.BaseRecipe):
-            db_recipe = recipe_from_schema(self.__db, recipe)
+            try: 
+                db_recipe = recipe_from_schema(self.__db, recipe)
+            except SQLAlchemyError as e:
+                self.__db.rollback()
+                return -1
             return db_recipe.id
+
 
         def get_recipe(self, id: int):
            recipe = self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
            return recipe_from_sql_model(recipe)
         
-        def get_random_recipe(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None):
+        def get_random_recipe(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None, ingredients: list[str]=None):
             calMin, calMax = minMax(calories, energy_error)
             proMin, proMax = minMax(protein, energy_error)
             fatMin, fatMax = minMax(fat, energy_error)
@@ -51,6 +57,12 @@ class SQLRecipeDB(BaseRecipeDB):
             if tags is not None:
                 recipes = recipes.join(model.recipe_tag_association).join(model.Tag)\
                     .filter(model.Tag.tag.in_(tags))
+
+            if ingredients is not None:
+                recipes = recipes.join(model.Ingredient) \
+                    .join(model.Item, model.Ingredient.item) \
+                    .filter(model.Item.name.in_(ingredients))
+                
             recipe = recipes.order_by(func.random()).first()
             if recipe is None:
                 return None
@@ -63,7 +75,8 @@ class SQLRecipeDB(BaseRecipeDB):
                     return False
                 self.__db.delete(recipe)
                 self.__db.commit()
-            except:
+            except SQLAlchemyError as e:
+                self.__db.rollback()
                 return False
             return True
 

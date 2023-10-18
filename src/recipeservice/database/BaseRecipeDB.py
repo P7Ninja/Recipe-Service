@@ -25,7 +25,7 @@ class BaseRecipeDB:
         def update_recipe(self, id: int, recipe: schema.BaseRecipe) -> schema.Recipe:
             raise NotImplementedError("Not Implemented!")
         
-        def get_random_recipe(self, calories: float=0, protein: float=0, fat: float=0, carbs: float=0, energy_error: float=0, tags: list[str]=None) -> schema.Recipe:
+        def get_random_recipe(self, calories: float=0, protein: float=0, fat: float=0, carbs: float=0, energy_error: float=0, tags: list[str]=None, ingredients: list[str]=None) -> schema.Recipe:
             return
 
         def delete_recipe(self, id: int) -> schema.Recipe:

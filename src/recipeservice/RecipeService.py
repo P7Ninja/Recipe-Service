@@ -23,6 +23,7 @@ class RecipeService:
         self.__app.add_api_route("/recipe/random", self.get_random_recipe, methods=["GET"])
         self.__app.add_api_route("/recipe/{id}", self.get_recipe, methods=["GET"])
         self.__app.add_api_route("/recipe", self.get_recipes, methods=["GET"])
+        self.__app.add_api_route("/", lambda: {"message": "Recipe-Service"}, methods=["GET"])
 
     def get_recipe(self, id: int):
         return self.__db.get_recipe(id)
@@ -36,7 +37,8 @@ class RecipeService:
                           fat: float=0.0, 
                           carbohydrates: float=0.0, 
                           energy_error: float=0.0, 
-                          tags: _list=None
+                          tags: _list=None,
+                          ingredients: _list=None
                           ):
         return self.__db.get_random_recipe(
             calories=calories, 
@@ -44,5 +46,6 @@ class RecipeService:
             fat=fat,
             carbs=carbohydrates,
             energy_error=energy_error,
-            tags=tags
+            tags=tags,
+            ingredients=ingredients
             )
