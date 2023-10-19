@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker, session
 
@@ -21,8 +21,18 @@ class SQLRecipeDB(BaseRecipeDB):
             session.close_all_sessions()
             self.__engine.dispose()
         
-        def get_recipes(self):
-            return [recipe_from_sql_model(r) for r in self.__db.query(model.Recipe).limit(100).all()]
+        def get_recipes(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None, ingredients: list[str]=None):
+            recipes = self.__recipes_by_query(calories, protein, fat, carbs, energy_error, tags, ingredients)
+            schema_recipes = [recipe_from_sql_model(r) for r in recipes.all()]
+
+            if ingredients is not None:
+                lower = [i.lower() for i in ingredients]
+                schema_recipes.sort(
+                     key=lambda r: sum(1 for i in r.ingredients if i.item.lower() in lower) / len(lower),
+                     reverse=True
+                )
+            return schema_recipes
+            
         
         def create_recipe(self, recipe: schema.BaseRecipe):
             try: 
@@ -38,6 +48,25 @@ class SQLRecipeDB(BaseRecipeDB):
            return recipe_from_sql_model(recipe)
         
         def get_random_recipe(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None, ingredients: list[str]=None):
+            recipes = self.__recipes_by_query(calories, protein, fat, carbs, energy_error, tags, ingredients)
+            recipe = recipes.order_by(func.random()).first()
+            if recipe is None:
+                return None
+            return recipe_from_sql_model(recipe)
+        
+        def delete_recipe(self, id: int):
+            try:
+                recipe = self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
+                if recipe is None:
+                    return False
+                self.__db.delete(recipe)
+                self.__db.commit()
+            except SQLAlchemyError as e:
+                self.__db.rollback()
+                return False
+            return True
+
+        def __recipes_by_query(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None, ingredients: list[str]=None):
             calMin, calMax = minMax(calories, energy_error)
             proMin, proMax = minMax(protein, energy_error)
             fatMin, fatMax = minMax(fat, energy_error)
@@ -56,30 +85,13 @@ class SQLRecipeDB(BaseRecipeDB):
                     )
             if tags is not None:
                 recipes = recipes.join(model.recipe_tag_association).join(model.Tag)\
-                    .filter(model.Tag.tag.in_(tags))
+                    .filter(or_(model.Tag.tag.ilike(tag) for tag in tags))
 
             if ingredients is not None:
                 recipes = recipes.join(model.Ingredient) \
                     .join(model.Item, model.Ingredient.item) \
-                    .filter(model.Item.name.in_(ingredients))
-                
-            recipe = recipes.order_by(func.random()).first()
-            if recipe is None:
-                return None
-            return recipe_from_sql_model(recipe)
-        
-        def delete_recipe(self, id: int):
-            try:
-                recipe = self.__db.query(model.Recipe).filter(model.Recipe.id == id).first()
-                if recipe is None:
-                    return False
-                self.__db.delete(recipe)
-                self.__db.commit()
-            except SQLAlchemyError as e:
-                self.__db.rollback()
-                return False
-            return True
-
+                    .filter(or_(model.Item.name.ilike(ing) for ing in ingredients))
+            return recipes
 
 def minMax(num: float, error: float):
     if num == 0:

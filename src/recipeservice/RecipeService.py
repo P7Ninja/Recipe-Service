@@ -28,8 +28,24 @@ class RecipeService:
     def get_recipe(self, id: int):
         return self.__db.get_recipe(id)
     
-    def get_recipes(self):
-        return self.__db.get_recipes()
+    def get_recipes(self, 
+                          calories: float=0.0, 
+                          protein: float=0.0, 
+                          fat: float=0.0, 
+                          carbohydrates: float=0.0, 
+                          energy_error: float=0.0, 
+                          tags: _list=None,
+                          ingredients: _list=None
+                          ):
+        return self.__db.get_recipes(
+            calories=calories, 
+            protein=protein,
+            fat=fat,
+            carbs=carbohydrates,
+            energy_error=energy_error,
+            tags=tags,
+            ingredients=ingredients
+            )
     
     def get_random_recipe(self, 
                           calories: float=0.0, 
@@ -49,3 +65,4 @@ class RecipeService:
             tags=tags,
             ingredients=ingredients
             )
+

@@ -13,7 +13,7 @@ class BaseRecipeDB:
         def create(self):
             return
         
-        def get_recipes(self) -> list[schema.Recipe]:
+        def get_recipes(self, calories: float=0, protein: float=0, fat: float=0, carbs: float=0, energy_error: float=0, tags: list[str]=None, ingredients: list[str]=None) -> list[schema.Recipe]:
             return
         
         def create_recipe(self, recipe: schema.BaseRecipe) -> schema.Recipe:
