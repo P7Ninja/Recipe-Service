@@ -1,6 +1,6 @@
 import json
 import re
-from ..database.datastructure import *
+from ...database.schema import *
 
 def parse_MealDB_recipe(recipes):
     recipe = recipes['meals'][0]

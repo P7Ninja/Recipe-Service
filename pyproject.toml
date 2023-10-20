@@ -27,3 +27,4 @@ write_to = "src/recipeservice/version.py"
 # All the following settings are optional:
 where = ["src"]
 include = ["recipeservice*"]
+exclude = ["tests"]
