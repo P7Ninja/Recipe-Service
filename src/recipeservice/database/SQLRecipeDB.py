@@ -23,7 +23,7 @@ class SQLRecipeDB(BaseRecipeDB):
         
         def get_recipes(self, calories: float=.0, protein: float=.0, fat: float=.0, carbs: float=.0, energy_error: float=.0, tags: list[str]=None, ingredients: list[str]=None):
             recipes = self.__recipes_by_query(calories, protein, fat, carbs, energy_error, tags, ingredients)
-            schema_recipes = [recipe_from_sql_model(r) for r in recipes.all()]
+            schema_recipes = [recipe_from_sql_model(r) for r in recipes.limit(25).all()]
 
             if ingredients is not None:
                 lower = [i.lower() for i in ingredients]
