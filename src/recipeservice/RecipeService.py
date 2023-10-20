@@ -25,10 +25,10 @@ class RecipeService:
         self.__app.add_api_route("/recipe", self.get_recipes, methods=["GET"])
         self.__app.add_api_route("/", lambda: {"message": "Recipe-Service"}, methods=["GET"])
 
-    def get_recipe(self, id: int):
+    async def get_recipe(self, id: int):
         return self.__db.get_recipe(id)
     
-    def get_recipes(self, 
+    async def get_recipes(self, 
                           calories: float=0.0, 
                           protein: float=0.0, 
                           fat: float=0.0, 
@@ -47,7 +47,7 @@ class RecipeService:
             ingredients=ingredients
             )
     
-    def get_random_recipe(self, 
+    async def get_random_recipe(self, 
                           calories: float=0.0, 
                           protein: float=0.0, 
                           fat: float=0.0, 
