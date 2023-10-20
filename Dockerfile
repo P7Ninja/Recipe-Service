@@ -13,4 +13,4 @@ COPY /.env /application/.env
 EXPOSE 8443
 
 
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8443"]
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8443", "--root-path", "/recipeservice"]
