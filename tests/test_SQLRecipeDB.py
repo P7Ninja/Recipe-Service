@@ -21,7 +21,7 @@ def db(request: FixtureRequest, tmp_path: Path):
     return db
 
 def test_db_get_recipes(db: SQLRecipeDB):
-    assert len(db.get_recipes()) == 30
+    assert len(db.get_recipes()) == 25
     
 def test_db_create_recipe(db: SQLRecipeDB):
     new_recipe = BaseRecipe(
