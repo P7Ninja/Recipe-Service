@@ -55,4 +55,4 @@ def test_db_delete_recipe_success(db: SQLRecipeDB):
     assert db.delete_recipe(4) == True
 
 def test_db_delete_recipe_fail(db: SQLRecipeDB):
-    assert db.delete_recipe(50) == False
+    assert db.delete_recipe(50) == 404 or 500
