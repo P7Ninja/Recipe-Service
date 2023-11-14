@@ -2,6 +2,7 @@ import pytest
 import shutil
 from pytest import FixtureRequest
 from pathlib import Path
+from fastapi import HTTPException
 
 from recipeservice import SQLRecipeDB
 from recipeservice.database.schema import BaseRecipe, Ingredient, Energy
@@ -46,8 +47,7 @@ def test_db_create_recipe_success(db: SQLRecipeDB):
 def test_db_create_recipe_no_recipe(db: SQLRecipeDB):
     try:
         db.create_recipe(None)
-    except Exception as e:
-        assert type(e).__name__ == "HTTPException"
+    except HTTPException as e:
         assert e.status_code == 400
 
 
@@ -66,8 +66,7 @@ def test_db_get_random_recipe(db: SQLRecipeDB):
 def test_db_get_random_recipe_no_recipe(db: SQLRecipeDB):
     try:
         db.get_random_recipe(calories=100000)
-    except Exception as e:
-        assert type(e).__name__ == "HTTPException"
+    except HTTPException as e:
         assert e.status_code == 500
 
 
@@ -78,21 +77,18 @@ def test_db_delete_recipe_success(db: SQLRecipeDB):
 def test_db_delete_recipe_no_id(db: SQLRecipeDB):
     try:
         db.delete_recipe(None)
-    except Exception as e:
-        assert type(e).__name__ == "HTTPException"
+    except HTTPException as e:
         assert e.status_code == 400
 
 def test_db_delete_recipe_no_recipe(db: SQLRecipeDB):
     try:
         db.delete_recipe(50)
-    except Exception as e:
-        assert type(e).__name__ == "HTTPException"
+    except HTTPException as e:
         assert e.status_code == 404
 
 def test_db_delete_recipe_fail(db: SQLRecipeDB):
     try:
         db.delete_recipe(4)
-    except Exception as e:
-        assert type(e).__name__ == "HTTPException"
+    except HTTPException as e:
         assert e.status_code == 500
         
