@@ -22,8 +22,10 @@ def db(request: FixtureRequest, tmp_path: Path):
 
 def test_db_get_recipes(db: SQLRecipeDB):
     assert len(db.get_recipes()) == 25
-    
-def test_db_create_recipe(db: SQLRecipeDB):
+
+
+
+def test_db_create_recipe_success(db: SQLRecipeDB):
     new_recipe = BaseRecipe(
         title="test",
         servings=1,
@@ -40,6 +42,16 @@ def test_db_create_recipe(db: SQLRecipeDB):
     del db_recipe["id"]
     assert db_recipe == new_recipe.model_dump()
     assert id == db_id
+    
+def test_db_create_recipe_no_recipe(db: SQLRecipeDB):
+    try:
+        db.create_recipe(None)
+    except Exception as e:
+        assert type(e).__name__ == "HTTPException"
+        assert e.status_code == 400
+
+
+
 
 def test_db_get_random_recipe(db: SQLRecipeDB):
     res = [
@@ -51,8 +63,36 @@ def test_db_get_random_recipe(db: SQLRecipeDB):
         id = db.get_random_recipe(**input).id
         assert id == ex
 
+def test_db_get_random_recipe_no_recipe(db: SQLRecipeDB):
+    try:
+        db.get_random_recipe(calories=100000)
+    except Exception as e:
+        assert type(e).__name__ == "HTTPException"
+        assert e.status_code == 500
+
+
+
 def test_db_delete_recipe_success(db: SQLRecipeDB):
     assert db.delete_recipe(4) == True
 
+def test_db_delete_recipe_no_id(db: SQLRecipeDB):
+    try:
+        db.delete_recipe(None)
+    except Exception as e:
+        assert type(e).__name__ == "HTTPException"
+        assert e.status_code == 400
+
+def test_db_delete_recipe_no_recipe(db: SQLRecipeDB):
+    try:
+        db.delete_recipe(50)
+    except Exception as e:
+        assert type(e).__name__ == "HTTPException"
+        assert e.status_code == 404
+
 def test_db_delete_recipe_fail(db: SQLRecipeDB):
-    assert db.delete_recipe(50) == 404 or 500
+    try:
+        db.delete_recipe(4)
+    except Exception as e:
+        assert type(e).__name__ == "HTTPException"
+        assert e.status_code == 500
+        
