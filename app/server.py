@@ -1,9 +1,8 @@
 from fastapi import FastAPI
-from dotenv import dotenv_values
-
 from recipeservice import RecipeService, SQLRecipeDB
+import os
 
-cfg = dotenv_values(".env")
+cfg = os.environ
 
 app = FastAPI()
 db = SQLRecipeDB(cfg)
